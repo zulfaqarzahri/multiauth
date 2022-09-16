@@ -99,6 +99,66 @@ class UserController extends Controller
         }
     }
 
+    function edit(Request $request){
+
+        $user = User::find(base64_decode($request->id));
+
+        return view('dashboard.user.edit', compact('user'));
+    }
+
+    function update(Request $request){
+
+        $request->validate([
+            'name' => 'required',
+            'password' => 'required|min:5|max:30',
+            'confirm_password' =>  'required|min:5|max:30|same:password'
+        ]);
+
+        $user = User::find(base64_decode($request->id));
+        $user->name = $request->name;
+        //check if password changed
+        $hashed_password = \Hash::make($request->password);
+        if($user->password !== $hashed_password){
+            //if password change then let user know thru email
+            $user->password = $hashed_password;
+
+            $last_id = $user->id;
+
+            $token = $last_id.hash('sha256', \Str::random(120));
+            $verifyURL = route('user.verify', ['token' => $token, 'service' => 'Password_change']);
+
+            VerifyUser::create([
+                'user_id' => $last_id,
+                'token' => $token,
+            ]);
+
+            $message = 'Dear <b>' . $request->name. '</b> ';
+            $message .= 'We wanted to let you know that your password has changed.';
+
+            $mail_data = [
+                'recipient' => $user->email,
+                'fromEmail' => $user->email,
+                'fromName' => $request->name,
+                'subject' => 'Your Password has changed',
+                'body' => $message,
+                'actionLink' => $verifyURL
+            ];
+
+            \Mail::send('email-template', $mail_data, function($message) use ($mail_data){
+                $message->to($mail_data['recipient'])
+                    ->from($mail_data['fromEmail'], $mail_data['fromName'])
+                    ->subject($mail_data['subject']);
+            });
+        }
+        $save = $user->save();
+
+        if($save){
+            return redirect()->route('user.home')->with('success', 'You updated user successfully');
+        }else{
+            return redirect()->route('user.home')->with('fail', 'Something went wrong, failed to update');
+        }
+    }
+
     function logout(Request $request){
         Auth::guard('web')->logout();
         return redirect('/');

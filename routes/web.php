@@ -5,6 +5,7 @@ use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Models\User;
 use App\Models\Admin;
+use App\Http\Controllers\MailController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,6 +22,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('send-mail', [MailController::class, 'sendMail'])->name('sendMail');
+
 //Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 Route::prefix('user')->name('user.')->group(function(){
    Route::middleware(['guest:web', 'PreventBackHistory'])->group(function(){
@@ -33,6 +36,8 @@ Route::prefix('user')->name('user.')->group(function(){
 
     Route::middleware(['auth:web', 'is_user_verify_email', 'PreventBackHistory'])->group(function(){
         Route::view('home', 'dashboard.user.home')->name('home');
+        Route::get('edit', [UserController::class, 'edit'])->name('edit');
+        Route::post('update/{id}', [UserController::class, 'update'])->name('update');
         Route::post('logout', [UserController::class, 'logout'])->name('logout');
     });
 });

@@ -15,6 +15,16 @@
     <div class="row">
         <div class="col-md-6 offset-md-3" style="margin-top: 45px;">
             <h4>User Dashboard</h4><hr>
+            @if(Session::get('success'))
+                <div class="alert alert-success">
+                    {{ Session::get('success') }}
+                </div>
+            @endif
+            @if(Session::get('fail'))
+                <div class="alert alert-danger">
+                    {{ Session::get('fail') }}
+                </div>
+            @endif
             <table class="table">
                 <thead>
                 <tr>
@@ -27,7 +37,9 @@
                 <tr>
                     <td>{{ Auth::guard('web')->user()->name }}</td>
                     <td>{{ Auth::guard('web')->user()->email }}</td>
-                    <td><a href="{{ route('user.logout') }}" onclick="event.preventDefault();document.getElementById('logout-form').submit();">Logout</a>
+                    <td>
+                        <a href="{{ route('user.edit', ['id' => base64_encode(Auth::guard('web')->user()->id) ]) }}">Edit</a>
+                        <a href="{{ route('user.logout') }}" onclick="event.preventDefault();document.getElementById('logout-form').submit();">Logout</a>
                     <form action="{{ route('user.logout') }}" method="post" class="d-none" id="logout-form">@csrf</form>
                     </td>
                 </tr>
